@@ -7,10 +7,6 @@ function parse_claim(str)
 	return { id = tonumber(a), x = tonumber(b), y = tonumber(c), width = tonumber(d), height = tonumber(e) }
 end
 
-function describe(a)
-	return "[#" .. a.id .. " at (" .. a.x .. "," .. a.y ..") w=" .. a.width .. " h=" .. a.height .. "]"
-end
-
 function claims_intersect(a, b)
 	if a.x >= b.x + b.width then return end
 	if b.x >= a.x + a.width then return end
@@ -31,19 +27,23 @@ function solve(input)
 	-- #3 @ 5,5: 2x2
 	-- claims = { {id = 1, x = 1, y = 3, width = 4, height = 4}, {id = 2, x = 3, y = 1, width = 4, height = 4}, {id = 3, x = 5, y = 5, width = 2, height = 2} }
 
+	local t0 = os.clock()
+
 	for i = 1, #claims do
 		for j = 1, #claims do
 			if i ~= j and claims_intersect(claims[i], claims[j]) then
-				claims[i].id = 0
-				claims[j].id = 0
+				claims[i].intersects = true
+				claims[j].intersects = true
 				break
 			end
 		end
 	end
 
+	local time = os.clock() - t0
+	print(string.format("elapsed time: %.4f", time))
+
 	for i = 1, #claims do
-		local id = claims[i].id
-		if id > 0 then return id end
+		if not claims[i].intersects then return claims[i].id end
 	end
 end
 
