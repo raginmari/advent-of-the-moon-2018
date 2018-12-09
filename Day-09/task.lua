@@ -79,5 +79,12 @@ function solve(num_players, num_marbles)
 	return max
 end
 
+-- Example
 -- print("Solution: " .. (solve(9, 26) or "not found"))
+
+-- Part 1
 print("Solution: " .. (solve(446, 71522) or "not found"))
+
+-- Part 2
+-- print("Solution: " .. (solve(446, 7152200) or "not found"))
+
