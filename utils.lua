@@ -23,6 +23,15 @@ function M.array_filter(t, f)
 	return filtered
 end
 
+function M.array_reverse(t)
+	local i, j = 1, #t
+	while i < j do
+		t[i], t[j] = t[j], t[i]
+		i = i + 1
+		j = j - 1
+	end
+end
+
 function M.array_print(t)
 	for _, v in ipairs(t) do print(v) end
 end
