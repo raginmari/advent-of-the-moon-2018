@@ -49,7 +49,7 @@ function solve(num_players, num_marbles)
 	local current_player = 1
 	local scores = {}
 
-	for i = 1, num_marbles - 1 do
+	for i = 1, num_marbles do
 		if i % 23 == 0 then
 			-- The marble seven marbles counter clockwise of the current is removed
 			local removed_marble = current_marble
