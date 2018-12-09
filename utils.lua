@@ -15,6 +15,18 @@ function M.array_remove(t, val)
 	end
 end
 
+function M.array_filter(t, f)
+	local filtered = {}
+	for _, v in ipairs(t) do 
+		if f(v) then M.array_append(filtered, v) end
+	end
+	return filtered
+end
+
+function M.array_print(t)
+	for _, v in ipairs(t) do print(v) end
+end
+
 function M.set_count(t)
 	local c = 0
 	for _, _ in pairs(t) do c = c + 1 end
