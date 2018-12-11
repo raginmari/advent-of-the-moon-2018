@@ -66,22 +66,25 @@ function solve(input)
 		stars[#stars + 1] = parse(str)
 	end
 
+	local seconds = 0
 	local last_bb = { x = 0, y = 0, w = 1000000, h = 1000000 }
 	while true do
 		local bb = bounding_box(stars)
 		if bb.w * bb.h > last_bb.w * last_bb.h then 
 			advance_one_second(stars, -1)
 			print_stars(stars, last_bb)
+			seconds = seconds - 1
 			break
 		end
 		last_bb = bb
 		advance_one_second(stars)
+		seconds = seconds + 1
 	end
 
 	local time = os.clock() - t0
 	print(string.format("Elapsed time: %.4f", time))
 
-	return nil
+	return seconds
 end
 
 local input = input.read_file("input.txt")
