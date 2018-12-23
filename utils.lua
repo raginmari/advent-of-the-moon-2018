@@ -15,6 +15,17 @@ function M.array_remove(t, val)
 	end
 end
 
+function M.array_remove_where(t, f)
+	for i, v in ipairs(t) do 
+		if f(v) then
+			if i ~= #t then
+				t[i] = t[#t] -- Copy last to current index
+			end
+			t[#t] = nil	
+		end
+	end
+end
+
 function M.array_filter(t, f)
 	local filtered = {}
 	for _, v in ipairs(t) do 
