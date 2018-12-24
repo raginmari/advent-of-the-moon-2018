@@ -4,6 +4,12 @@ function M.array_append(t, val)
 	t[#t + 1] = val
 end
 
+function M.array_contains_where(t, f)
+	for _, v in ipairs(t) do
+		if f(v) then return true end
+	end
+end
+
 function M.array_remove(t, val)
 	for i, v in ipairs(t) do 
 		if v == val then 
