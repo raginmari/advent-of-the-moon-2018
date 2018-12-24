@@ -99,11 +99,10 @@ function move_cart(cart, tracks)
 	end
 end
 
-function collide_cart(cart, carts)
-	for _, next_cart in ipairs(carts) do
-		if next_cart.id ~= cart.id and next_cart.x == cart.x and next_cart.y == cart.y then
-			next_cart.crashed = true
-			cart.crashed = true
+function collision_at(x, y, id, carts)
+	for _, cart in ipairs(carts) do
+		if not cart.crashed and cart.id ~= id and cart.x == x and cart.y == y then
+			return cart
 		end
 	end
 end
@@ -117,12 +116,14 @@ end
 
 function tick(carts, tracks)
 	table.sort(carts, sort_carts)
-	local moved_carts = {}
 	for _, cart in ipairs(carts) do
 		if not cart.crashed then
 			move_cart(cart, tracks)
-			collide_cart(cart, moved_carts)
-			moved_carts[#moved_carts + 1] = cart
+			local collision = collision_at(cart.x, cart.y, cart.id, carts)
+			if collision then
+				collision.crashed = true
+				cart.crashed = true
+			end
 		end
 	end
 
