@@ -32,6 +32,12 @@ function M.array_remove_where(t, f)
 	end
 end
 
+function M.subarray(t, i, j)
+	local sub = {}
+	for k = i, j do sub[#sub + 1] = t[k] end
+	return sub
+end
+
 function M.array_filter(t, f)
 	local filtered = {}
 	for _, v in ipairs(t) do 
@@ -50,7 +56,8 @@ function M.array_reverse(t)
 end
 
 function M.array_print(t)
-	for _, v in ipairs(t) do print(v) end
+	local string = table.concat(t, ", ")
+	print("[" .. string .. "]")
 end
 
 function M.set_count(t)
