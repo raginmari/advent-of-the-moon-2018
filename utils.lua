@@ -85,4 +85,8 @@ function M.set_count(t)
 	return c
 end
 
+function M.string_trim(str)
+	return str:match("^%s*(.-)%s*$")
+end
+
 return M
