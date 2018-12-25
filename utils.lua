@@ -16,6 +16,12 @@ function M.array_contains_where(t, f)
 	end
 end
 
+function M.array_first_where(t, f)
+	for _, v in ipairs(t) do
+		if f(v) then return v end
+	end
+end
+
 function M.array_remove(t, val)
 	for i, v in ipairs(t) do 
 		if v == val then 
