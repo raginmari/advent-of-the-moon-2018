@@ -4,6 +4,12 @@ function M.array_append(t, val)
 	t[#t + 1] = val
 end
 
+function M.array_map(t, f)
+	local mapped = {}
+	for _, v in ipairs(t) do mapped[#mapped + 1] = f(v) end
+	return mapped
+end
+
 function M.array_contains_where(t, f)
 	for _, v in ipairs(t) do
 		if f(v) then return true end
@@ -56,6 +62,13 @@ function M.array_reverse(t)
 end
 
 function M.array_print(t)
+	for _, v in ipairs(t) do
+		if type(v) == "table" then 
+			print("array_print: unsupported array element type (table)")
+			return
+		end
+	end
+
 	local string = table.concat(t, ", ")
 	print("[" .. string .. "]")
 end
