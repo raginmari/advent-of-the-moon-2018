@@ -31,23 +31,28 @@ function solve(input)
 	for y = min_y, max_y do
 		for x = min_x, max_x do
 			local best_distance = 1000
-			local closest_index = nil
+			local closest_indexes = {}
 			
 			for k = 1, #coords do
 				local c = coords[k]
 				local distance = abs(c.x - x) + abs(c.y - y)
-				if distance < best_distance then
+				if distance == best_distance then
+					closest_indexes[#closest_indexes + 1] = k
+				elseif distance < best_distance then
 					best_distance = distance
-					closest_index = k
+					closest_indexes = { k }
 				end
 			end
 
-			if x == min_x or x == max_x or y == min_y or y == max_y then
-				-- Mark the index of this area as infinite
-				infinite_indexes[closest_index] = 1
-			else
-				-- There is one more location closest to this coordinate
-				counts[closest_index] = (counts[closest_index] or 0) + 1
+			if #closest_indexes == 1 then
+				local closest_index = closest_indexes[1]
+				if x == min_x or x == max_x or y == min_y or y == max_y then
+					-- Mark the index of this area as infinite
+					infinite_indexes[closest_index] = 1
+				else
+					-- There is one more location closest to this coordinate
+					counts[closest_index] = (counts[closest_index] or 0) + 1
+				end
 			end
 		end
 	end
