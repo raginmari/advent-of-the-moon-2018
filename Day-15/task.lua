@@ -15,6 +15,9 @@ local abs = math.abs
 -- up, left, right, down = reading order
 local deltas = { 0, -1, -1, 0, 1, 0, 0, 1 }
 
+-- down, right, left, up = inverse reading order
+local deltas_inv = { 0, 1, 1, 0, -1, 0, 0, -1 }
+
 function visualize(board, units)
 	local str = ""
 	for i, v in ipairs(board.grid) do
@@ -58,10 +61,16 @@ function make_elf(x, y)
 	return { id = nil, kind = ELF, x = x, y = y, killed = false, hp = 200 }
 end
 
+function next_unit_id(units)
+	return "" .. #units
+end
+
 function add_unit(unit, units)
+	local unit_id = next_unit_id(units)
+	unit.id = unit_id
 	units[#units + 1] = unit
-	unit.id = #units
-	return unit.id
+	units[unit_id] = unit
+	return unit_id
 end
 
 function parse_line(line, y, board, units)
@@ -119,8 +128,16 @@ function find_squares_next_to(positions, board)
 	return squares
 end
 
-function attack(targets, board)
-
+function attack(x, y, targets, board)
+	for _, target in ipairs(targets) do
+		for i = 1, #deltas_inv, 2 do
+			if target.x == x + deltas_inv[i] and target.y == y + deltas_inv[i + 1] then
+				target.hp = target.hp - 3
+				if target.hp <= 0 then target.killed = true end
+				return true
+			end
+		end
+	end
 end
 
 function make_path_node(index, ancestor, depth)
@@ -180,24 +197,23 @@ function move(x, y, dst_indexes, board, units)
 		end
 	end
 
-	if not #shortest_paths == 0 then return end
+	if #shortest_paths == 0 then return end -- No target is reachable
 
 	if #shortest_paths > 1 then
+		-- Sort shortest paths in reading order
 		table.sort(shortest_paths, function(a, b) return a[#a] < b[#b] end)
 	end
 
-	local next_index = shortest_paths[1][2] -- Second index of the shortest path
+	local path = shortest_paths[1]
+	local next_index = path[2]
+
+	-- Update board
 	local unit_id = board.grid[current_index]
 	board.grid[current_index], board.grid[next_index] = CLEAR, unit_id
 
-	local x, y = xy(next_index, board.width)
-	for _, unit in ipairs(units) do
-		if unit.id == unit_id then unit.x, unit.y = x, y end
-	end
-end
-
-function is_adjacent_position(x, y)
-	return function(a) return abs(a.x - x) == 1 or abs(a.y - y) == 1 end
+	-- Update unit
+	local unit = units[unit_id]
+	unit.x, unit.y = xy(next_index, board.width)
 end
 
 function tick(board, units)
@@ -206,7 +222,22 @@ function tick(board, units)
 		local targets = find_targets_of(unit, units)
 		if #targets == 0 then return true end -- End of combat!
 
+		local x, y = unit.x, unit.y
+		if not attack(x, y, targets, board, units) then
+			local target_squares = find_squares_next_to(targets, board)
+			if #target_squares > 0 then
+				move(x, y, target_squares, board, units)
+				attack(x, y, targets, board, units)
+			end
+		end
 
+		for _, target in ipairs(targets) do
+			if target.killed then
+				print(string.format("%s %s died", target.kind, target.id))
+				utils.array_remove_where(units, function(a) return a.id == target.id end)
+				board.grid[index(target.x, target.y, board.width)] = CLEAR
+			end
+		end
 	end
 end
 
@@ -220,18 +251,16 @@ function solve(input)
 	local board, units = parse(lines)
 	visualize(board, units)
 
-	-- local w = board.width
-	-- local path = path(index(1, 1, w), index(5, 5, w), board)
-	-- utils.array_print(path)
-
 	local rounds = 0
-	while rounds < 1 do
+	while true do
 		if tick(board, units) then break end
 		visualize(board, units)
 		rounds = rounds + 1
 	end
 
-	-- local result = rounds - 1
+	local sum = 0
+	for _, unit in ipairs(units) do sum = sum + unit.hp end
+	local result = (rounds - 1) * sum
 
 	local time = os.clock() - t0
 	print(string.format("Elapsed time: %.4f", time))
