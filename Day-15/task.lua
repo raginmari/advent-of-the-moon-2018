@@ -68,6 +68,8 @@ function xy(index, width)
 end
 
 function make_goblin(x, y)
+	-- "dead"		the unit is dead.
+	-- "killed"		the unit has been killed this turn. At the end of the tick, the flag is reset to false and "dead" is set true.
 	return { id = nil, kind = GOBLIN, x = x, y = y, killed = false, dead = false, hp = 200 }
 end
 
@@ -234,9 +236,10 @@ function move(x, y, targets, board, units)
 		end
 	end
 
-	if #shortest_paths == 0 then return end -- No target is reachable
-
-	if #shortest_paths > 1 then
+	if #shortest_paths == 0 then 
+		-- No target is reachable
+		return
+	elseif #shortest_paths > 1 then
 		-- Sort shortest paths in reading order
 		table.sort(shortest_paths, function(a, b) return a[#a] < b[#b] end)
 	end
