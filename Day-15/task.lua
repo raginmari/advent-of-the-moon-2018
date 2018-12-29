@@ -15,10 +15,16 @@ local abs = math.abs
 -- up, left, right, down = reading order
 local deltas = { 0, -1, -1, 0, 1, 0, 0, 1 }
 
--- down, right, left, up = inverse reading order
-local deltas_inv = { 0, 1, 1, 0, -1, 0, 0, -1 }
+function initial(kind)
+	if kind == ELF then return "E" else return "G" end
+end
 
-function visualize(board, units)
+function enemy_initial(kind)
+	if kind == ELF then return "G" else return "E" end
+end
+
+function visualize(board, units, headline)
+	print(headline)
 	local str = ""
 	for i, v in ipairs(board.grid) do
 		if v == CLEAR then
@@ -40,6 +46,14 @@ function visualize(board, units)
 			str = "" -- Next line
 		end
 	end
+
+	for _, unit in ipairs(units) do
+		if not unit.dead then
+			print(string.format("%s at %d,%d is %d", initial(unit.kind), unit.x, unit.y, unit.hp))
+		end
+	end	
+
+	print()
 end
 
 function index(x, y, width)
@@ -54,11 +68,11 @@ function xy(index, width)
 end
 
 function make_goblin(x, y)
-	return { id = nil, kind = GOBLIN, x = x, y = y, killed = false, hp = 200 }
+	return { id = nil, kind = GOBLIN, x = x, y = y, killed = false, dead = false, hp = 200 }
 end
 
 function make_elf(x, y)
-	return { id = nil, kind = ELF, x = x, y = y, killed = false, hp = 200 }
+	return { id = nil, kind = ELF, x = x, y = y, killed = false, dead = false, hp = 200 }
 end
 
 function next_unit_id(units)
@@ -69,7 +83,6 @@ function add_unit(unit, units)
 	local unit_id = next_unit_id(units)
 	unit.id = unit_id
 	units[#units + 1] = unit
-	units[unit_id] = unit
 	return unit_id
 end
 
@@ -113,7 +126,7 @@ end
 function find_targets_of(unit, units)
 	local kind
 	if unit.kind == GOBLIN then kind = ELF else kind = GOBLIN end
-	return utils.array_filter(units, function(a) return a.kind == kind end)
+	return utils.array_filter(units, function(a) return not a.dead and a.kind == kind end)
 end
 
 function find_squares_next_to(positions, board)
@@ -128,16 +141,40 @@ function find_squares_next_to(positions, board)
 	return squares
 end
 
+function filter_adjacent_to(x, y)
+	return function(a)
+		local abs_x = abs(x - a.x)
+		local abs_y = abs(y - a.y)
+		return abs_x == 1 and abs_y == 0 or abs_x == 0 and abs_y == 1 
+	end
+end
+
 function attack(x, y, targets, board)
-	for _, target in ipairs(targets) do
-		for i = 1, #deltas_inv, 2 do
-			if target.x == x + deltas_inv[i] and target.y == y + deltas_inv[i + 1] then
-				target.hp = target.hp - 3
-				if target.hp <= 0 then target.killed = true end
-				return true
-			end
+
+	-- Assumes that the given targets are sorted in reading order
+
+	local filter = filter_adjacent_to(x, y)
+	local adjacent_targets = utils.array_filter(targets, filter)
+	
+	if #adjacent_targets == 0 then return end -- No target in range
+
+	local weakest_targets = {}
+	for _, t in ipairs(adjacent_targets) do
+		if #weakest_targets == 0 or t.hp == weakest_targets[1].hp then
+			weakest_targets[#weakest_targets + 1] = t
+		elseif t.hp < weakest_targets[1].hp then
+			weakest_targets = { t }
 		end
 	end
+
+	local target = weakest_targets[1]
+	print(string.format("%s at %d,%d attacks %s at %d,%d", enemy_initial(target.kind), x, y, initial(target.kind), target.x, target.y))
+	target.hp = target.hp - 3
+	if target.hp <= 0 then 
+		target.killed = true 
+	end
+
+	return true
 end
 
 function make_path_node(index, ancestor, depth)
@@ -147,8 +184,7 @@ end
 function path(src_index, dst_index, board)
 	-- Invert source and destination to avoid reversing of path array below
 	local src, dst = dst_index, src_index
-	print(string.format("computing path from %d to %d", dst, src))
-
+	
 	local queue = { make_path_node(src, nil, 0) }
 	-- Algorithm increments head index instead of removing elements at the head of the array
 	local queue_head_index = 1
@@ -165,7 +201,6 @@ function path(src_index, dst_index, board)
 				path[#path + 1] = n.index
 				n = n.ancestor
 			end
-			utils.array_print(path)
 			return path
 		end
 		
@@ -179,11 +214,13 @@ function path(src_index, dst_index, board)
 			end
 		end
 	end
-
-	print("unreachable!")
 end
 
-function move(x, y, dst_indexes, board, units)
+function move(x, y, targets, board, units)
+	
+	-- ???
+	local dst_indexes = find_squares_next_to(targets, board)
+
 	local current_index = index(x, y, board.width)
 	local shortest_paths = {}
 	for _, dst_index in ipairs(dst_indexes) do
@@ -212,30 +249,31 @@ function move(x, y, dst_indexes, board, units)
 	board.grid[current_index], board.grid[next_index] = CLEAR, unit_id
 
 	-- Update unit
-	local unit = units[unit_id]
+	local unit = utils.array_first_where(units, function(a) return a.id == unit_id end)
 	unit.x, unit.y = xy(next_index, board.width)
 end
 
 function tick(board, units)
 	table.sort(units, sort_by_reading_order)
+	local units = utils.array_filter(units, function(a) return not a.dead end)
+
 	for _, unit in ipairs(units) do
-		local targets = find_targets_of(unit, units)
-		if #targets == 0 then return true end -- End of combat!
+		if not unit.dead then
+			local targets = find_targets_of(unit, units)
+			if #targets == 0 then return true end -- End of combat!
 
-		local x, y = unit.x, unit.y
-		if not attack(x, y, targets, board, units) then
-			local target_squares = find_squares_next_to(targets, board)
-			if #target_squares > 0 then
-				move(x, y, target_squares, board, units)
-				attack(x, y, targets, board, units)
+			if not attack(unit.x, unit.y, targets, board, units) then
+				move(unit.x, unit.y, targets, board, units)
+				attack(unit.x, unit.y, targets, board, units)
 			end
-		end
 
-		for _, target in ipairs(targets) do
-			if target.killed then
-				print(string.format("%s %s died", target.kind, target.id))
-				utils.array_remove_where(units, function(a) return a.id == target.id end)
-				board.grid[index(target.x, target.y, board.width)] = CLEAR
+			for _, target in ipairs(targets) do
+				if target.killed then
+					target.dead = true
+					target.killed = false
+					print(string.format("%s at %d,%d died", initial(target.kind), target.x, target.y))
+					board.grid[index(target.x, target.y, board.width)] = CLEAR
+				end
 			end
 		end
 	end
@@ -249,18 +287,27 @@ function solve(input)
 	local lines = utils.array_map(input, trim)
 
 	local board, units = parse(lines)
-	visualize(board, units)
+	visualize(board, units, "Initial state")
 
 	local rounds = 0
 	while true do
-		if tick(board, units) then break end
-		visualize(board, units)
+		if tick(board, units) then 
+			visualize(board, units, string.format("End of combat in round %d", rounds + 1))
+			break
+		end
 		rounds = rounds + 1
+		visualize(board, units, string.format("After round %d", rounds))
 	end
 
 	local sum = 0
-	for _, unit in ipairs(units) do sum = sum + unit.hp end
-	local result = (rounds - 1) * sum
+	for _, unit in ipairs(units) do 
+		if not unit.dead then
+			print("adding " .. unit.hp .. " hp")
+			sum = sum + unit.hp
+		end
+	end
+	local result = rounds * sum
+	print("full rounds: " .. rounds .. ", total remaining hp: " .. sum)
 
 	local time = os.clock() - t0
 	print(string.format("Elapsed time: %.4f", time))
