@@ -47,11 +47,11 @@ function visualize(board, units, headline)
 		end
 	end
 
-	for _, unit in ipairs(units) do
-		if not unit.dead then
-			print(string.format("%s at %d,%d is %d", initial(unit.kind), unit.x, unit.y, unit.hp))
-		end
-	end	
+	-- for _, unit in ipairs(units) do
+	-- 	if not unit.dead then
+	-- 		print(string.format("%s at %d,%d is %d", initial(unit.kind), unit.x, unit.y, unit.hp))
+	-- 	end
+	-- end	
 
 	print()
 end
@@ -170,7 +170,7 @@ function attack(x, y, targets, board)
 	table.sort(weakest_targets, sort_by_reading_order)
 
 	local target = weakest_targets[1]
-	print(string.format("%s at %d,%d attacks %s at %d,%d", enemy_initial(target.kind), x, y, initial(target.kind), target.x, target.y))
+	-- print(string.format("%s at %d,%d attacks %s at %d,%d", enemy_initial(target.kind), x, y, initial(target.kind), target.x, target.y))
 	target.hp = target.hp - 3
 	if target.hp <= 0 then 
 		target.killed = true 
@@ -220,7 +220,6 @@ end
 
 function move(x, y, targets, board, units)
 	
-	-- ???
 	local dst_indexes = find_squares_next_to(targets, board)
 
 	local current_index = index(x, y, board.width)
@@ -274,7 +273,7 @@ function tick(board, units)
 				if target.killed then
 					target.dead = true
 					target.killed = false
-					print(string.format("%s at %d,%d died", initial(target.kind), target.x, target.y))
+					-- print(string.format("%s at %d,%d died", initial(target.kind), target.x, target.y))
 					board.grid[index(target.x, target.y, board.width)] = CLEAR
 				end
 			end
@@ -305,7 +304,6 @@ function solve(input)
 	local sum = 0
 	for _, unit in ipairs(units) do 
 		if not unit.dead then
-			print("adding " .. unit.hp .. " hp")
 			sum = sum + unit.hp
 		end
 	end
