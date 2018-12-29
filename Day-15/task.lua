@@ -178,26 +178,26 @@ function attack(x, y, targets, board)
 end
 
 function make_path_node(index, ancestor, depth)
-	return { index = index, ancestor = ancestor, depth = depth }
+	return { index = index, ancestor = ancestor }
 end
 
 function path(src_index, dst_index, board)
 	-- Invert source and destination to avoid reversing of path array below
-	local src, dst = dst_index, src_index
+	local src_index, dst_index = dst_index, src_index
 	
-	local queue = { make_path_node(src, nil, 0) }
+	local queue = { make_path_node(src_index, nil) }
 	-- Algorithm increments head index instead of removing elements at the head of the array
 	local queue_head_index = 1
-	local visited = { src = 1 }
+	local visited = { src_index = 1 }
 
 	while queue_head_index <= #queue do
 		local node = queue[queue_head_index]
 		queue_head_index = queue_head_index + 1
 		
-		if node.index == dst then 
+		if node.index == dst_index then 
 			local path = {}
 			local n = node
-			while n ~= nil do
+			while n ~= nil do -- Walks back along the path
 				path[#path + 1] = n.index
 				n = n.ancestor
 			end
@@ -208,8 +208,8 @@ function path(src_index, dst_index, board)
 
 		for i = 1, #deltas, 2 do
 			local neighbor_index = index(x + deltas[i], y + deltas[i + 1], board.width)
-			if visited[neighbor_index] == nil and (board.grid[neighbor_index] == CLEAR or neighbor_index == dst) then
-				queue[#queue + 1] = make_path_node(neighbor_index, node, node.depth + 1)
+			if visited[neighbor_index] == nil and (board.grid[neighbor_index] == CLEAR or neighbor_index == dst_index) then
+				queue[#queue + 1] = make_path_node(neighbor_index, node)
 				visited[neighbor_index] = 1
 			end
 		end
