@@ -1,5 +1,11 @@
 local M = {}
 
+function M.array_copy(t, s)
+	local s = s or {}
+	for i = 1, #t do s[i] = t[i] end
+	return s
+end
+
 function M.array_append(t, val)
 	t[#t + 1] = val
 end
