@@ -153,8 +153,6 @@ end
 
 function attack(x, y, targets, board)
 
-	-- Assumes that the given targets are sorted in reading order
-
 	local filter = filter_adjacent_to(x, y)
 	local adjacent_targets = utils.array_filter(targets, filter)
 	
@@ -168,6 +166,8 @@ function attack(x, y, targets, board)
 			weakest_targets = { t }
 		end
 	end
+
+	table.sort(weakest_targets, sort_by_reading_order)
 
 	local target = weakest_targets[1]
 	print(string.format("%s at %d,%d attacks %s at %d,%d", enemy_initial(target.kind), x, y, initial(target.kind), target.x, target.y))
