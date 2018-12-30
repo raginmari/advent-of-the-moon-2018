@@ -74,15 +74,18 @@ function M.array_reverse(t)
 end
 
 function M.array_print(t)
+	print(M.array_description(t))
+end
+
+function M.array_description(t)
 	for _, v in ipairs(t) do
 		if type(v) == "table" then 
-			print("array_print: unsupported array element type (table)")
-			return
+			return "Unsupported array element type for printing: table"
 		end
 	end
 
 	local string = table.concat(t, ", ")
-	print("[" .. string .. "]")
+	return "[" .. string .. "]"	
 end
 
 function M.set_count(t)
